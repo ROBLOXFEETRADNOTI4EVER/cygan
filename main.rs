@@ -91,14 +91,14 @@ fn math_operations_version_0(file_read: &str) -> fsize {
         Regex::new(r"^\s*remove\(\s*(-?\d+(?:\.\d+)?(?:\s*,\s*-?\d+(?:\.\d+)?)*)\s*\)\s*;\s*$")
             .unwrap();
     let re_multiply: Regex =
-        Regex::new(r"^\s*multiply\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)\s*;\s*$")
+        Regex::new(r"^\s*multiply\(\s*(-?\d+(?:\.\d+)?(?:\s*,\s*-?\d+(?:\.\d+)?)*)\s*\)\s*;\s*$")
             .unwrap();
     let re_devide: Regex =
-        Regex::new(r"^\s*devide\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)\s*;\s*$")
+        Regex::new(r"^\s*devide\(\s*(-?\d+(?:\.\d+)?(?:\s*,\s*-?\d+(?:\.\d+)?)*)\s*\)\s*;\s*$")
             .unwrap();
-    let re_complex: Regex =
-        Regex::new(r"^\s*complex\(\s*(-?\d+(?:\.\d+)?(?:\s*,\s*-?\d+(?:\.\d+)?)*)\s*\)\s*;\s*$")
-            .unwrap();
+    // let re_complex: Regex =
+    // Regex::new(r"^\s*complex\(\s*(-?\d+(?:\.\d+)?(?:\s*,\s*-?\d+(?:\.\d+)?)*)\s*\)\s*;\s*$")
+    //     .unwrap();
 
     if re_add.is_match(&file_read.replace(" ", "")) {
         // println!("ok");
@@ -148,21 +148,45 @@ fn math_operations_version_0(file_read: &str) -> fsize {
         }
     } else if re_multiply.is_match(&file_read.replace(" ", "")) {
         if let Some(caps) = re_multiply.captures(&file_read) {
-            let num1 = caps.get(1).unwrap().as_str();
-            let num2 = caps.get(2).unwrap().as_str();
-            // println!("First: {}, Second: {}", num1, num2);
-            // println!("First num + secs num is ")
-            return num1.parse::<fsize>().unwrap() * num2.parse::<fsize>().unwrap();
+            let mut total_num: f64 = 0.;
+            let mut vv: Vec<f64> = Vec::new();
+            let num = caps.get(1).unwrap().as_str();
+            vv = num
+                .split(',')
+                .map(|s| s.trim().parse::<f64>().unwrap())
+                .collect();
+            total_num = 1.;
+            // total_num += vv[0];
+
+            for i in vv {
+                total_num *= i;
+            }
+
+            return total_num;
         } else {
             panic!("FAILED TO DO MY JOB");
         }
     } else if re_devide.is_match(&file_read.replace(" ", "")) {
         if let Some(caps) = re_devide.captures(&file_read) {
-            let num1 = caps.get(1).unwrap().as_str();
-            let num2 = caps.get(2).unwrap().as_str();
-            // println!("First: {}, Second: {}", num1, num2);
-            // println!("First num + secs num is ")
-            return num1.parse::<fsize>().unwrap() / num2.parse::<fsize>().unwrap();
+            let mut total_num: f64 = 0.;
+            let mut vv: Vec<f64> = Vec::new();
+            let num = caps.get(1).unwrap().as_str();
+            vv = num
+                .split(',')
+                .map(|s| s.trim().parse::<f64>().unwrap())
+                .collect();
+            total_num = vv[0];
+            // total_num += vv[0];
+            let mut a = 0;
+            // println!("{:#?}",vv);
+            for i in vv {
+                if i == total_num {
+                    continue;
+                }
+                total_num = total_num / i;
+            }
+
+            return total_num;
         } else {
             panic!("FAILED TO DO MY JOB");
         }
