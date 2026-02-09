@@ -4,6 +4,9 @@ use std::fs::File;
 use std::io::ErrorKind;
 use std::io::Read;
 fn main() {
+
+
+    
     let cz_file_results = File::open("./main.cz");
 
     let _ = match cz_file_results {
@@ -33,96 +36,79 @@ fn main() {
         },
     };
 }
-
 fn check_syntax(file_read: &str) -> String {
-    // later we will require main fn
-    // need to check if its ascii only no wierd symbols later on handle it to
-    // Here a logic thing that deletes lines that have // since its commenting out
-    // file_read.replace(" ", "\n")
-    // file_read.replace(" ", "\n");
     let re_variable_name: Regex =
-        Regex::new(r#"^let [a-zA-Z_][a-zA-Z0-9_]* = (?:"[^"]*"|-?\d+(?:\.\d+)?);$"#).unwrap();
-    // we will do a thing we count how many valid things are there and then how many instuctions to run and we give it to the logic part
+    Regex::new(r#"^let [a-zA-Z_][a-zA-Z0-9_]* = (?:"[^"]*"|-?(?:\d+\.\d*|\d*\.\d+)|-?\d+);$"#).unwrap();
+
+    let re_integer: Regex = Regex::new(r"^let [a-zA-Z_][a-zA-Z0-9_]* = -?\d+;$").unwrap();
+    let re_float: Regex = Regex::new(r"^let [a-zA-Z_][a-zA-Z0-9_]* = -?(?:\d+\.\d*|\d*\.\d+);$").unwrap();
+    let re_string: Regex = Regex::new(r#"^let [a-zA-Z_][a-zA-Z0-9_]* = "[^"]*";$"#).unwrap();
 
     let mut new_vec: Vec<char> = Vec::new();
     let mut found_shit: bool = false;
     let mut is_a_variable: bool = false;
+    
     for i in 0..file_read.len() {
-        if file_read.chars().nth(i).unwrap() == '/' && file_read.chars().nth(i + 1).unwrap() == '/'
-        {
+        let current_char = file_read.chars().nth(i).unwrap();
+        
+        if current_char == '/' && i + 1 < file_read.len() 
+            && file_read.chars().nth(i + 1).unwrap() == '/' {
             found_shit = true;
-        } else if file_read.chars().nth(i).unwrap() == 'l'
+        }
+        
+        if current_char == 'l' && i + 2 < file_read.len()
             && file_read.chars().nth(i + 1).unwrap() == 'e'
             && file_read.chars().nth(i + 2).unwrap() == 't'
-            && found_shit == false
-        {
-            println!(
-                "found a let thing checking if its a variable,{}",
-                &file_read
-            );
-
+            && !found_shit {
+            println!("found a let thing checking if its a variable,{}", &file_read);
             is_a_variable = true;
         }
-        if file_read.chars().nth(i).unwrap() == '\n' {
+        
+        if current_char == '\n' {
             found_shit = false;
             is_a_variable = false;
+            new_vec.clear(); 
             continue;
         }
-
+        
         if !found_shit {
-            let a: char = file_read.chars().nth(i).unwrap();
-            new_vec.push(a);
+            new_vec.push(current_char);
         }
-
-        if file_read.chars().nth(i).unwrap() == ';' && found_shit == false && !is_a_variable {
-            // println!("found");
+        
+        if current_char == ';' && !found_shit && !is_a_variable {
             let result: String = new_vec.iter().collect();
-            println!("{result}");
-            // return result
-
+            // println!("{}", result);
             println!("{} :{}", result, math_operations_version_0(&result));
             new_vec.clear();
         }
-        let result: String = new_vec.iter().collect();
-        // println!("Result before the shit if statment {}",result);
-        if file_read.chars().nth(i).unwrap() == ';'
-            && found_shit == false
-            && is_a_variable
-            && re_variable_name.is_match(&result)
-        {
-            // println!("found");
+        
+
+ 
+        if current_char == ';' && !found_shit && is_a_variable {
             let result: String = new_vec.iter().collect();
-            println!("{result}");
-            // return result
-            println!(
-                "IS A VARIABLE AND NOT COMMENTED OUT AND ENDS WITH ; {}",
-                result
-            );
-            let re_integer: Regex = Regex::new(r"^let [a-zA-Z_][a-zA-Z0-9_]* = -?\d+;$").unwrap();
-            let re_float: Regex =
-                Regex::new(r"^let [a-zA-Z_][a-zA-Z0-9_]* = -?\d*\.\d*;$").unwrap();
-            let re_string: Regex =
-                Regex::new(r#"^let [a-zA-Z_][a-zA-Z0-9_]* = "[^"]*";$"#).unwrap();
-
-            if re_integer.is_match(&result) {
-                println!("{result} is an Integer");
-            } else if re_float.is_match(&result) {
-                println!("{result} is a Float");
-            } else if re_string.is_match(&result) {
-                println!("{result} is a String");
+            
+            if re_variable_name.is_match(&result) {
+                // println!("{}", result);
+                // println!("IS A VARIABLE AND NOT COMMENTED OUT AND ENDS WITH ; {}", result);
+   
+                if re_integer.is_match(&result) {
+                    println!("{} is an Integer", result);
+                } else if re_float.is_match(&result) {
+                    println!("{} is a Float", result);
+                } else if re_string.is_match(&result) {
+                    println!("{} is a String", result);
+                }
             }
-
-            // println!("{} :{}", result, math_operations_version_0(&result));
+            
             new_vec.clear();
+            is_a_variable = false;
         }
     }
+    
     let result: String = new_vec.iter().collect();
-    println!("vec is {:#?}", new_vec);
-    println!("result is {:#?}", result);
-
-    if re_variable_name.is_match(&result) {
-        println!("MATCH");
-    }
+    // println!("vec is {:#?}", new_vec);
+    // println!("result is {:#?}", result);
+    
     result
 }
 
