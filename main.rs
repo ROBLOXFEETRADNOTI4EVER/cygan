@@ -3,7 +3,6 @@ use regex::Regex;
 use std::fs::File;
 use std::io::ErrorKind;
 use std::io::Read;
-use std::vec;
 fn main() {
     let cz_file_results = File::open("./main.cz");
 
@@ -41,7 +40,8 @@ fn check_syntax(file_read: &str) -> String {
     // Here a logic thing that deletes lines that have // since its commenting out
     // file_read.replace(" ", "\n")
     // file_read.replace(" ", "\n");
-
+    let re_variable_name: Regex =
+        Regex::new(r#"^let [a-zA-Z_][a-zA-Z0-9_]* = (?:"[^"]*"|-?\d+(?:\.\d+)?);$"#).unwrap();
     // we will do a thing we count how many valid things are there and then how many instuctions to run and we give it to the logic part
 
     let mut new_vec: Vec<char> = Vec::new();
@@ -56,8 +56,12 @@ fn check_syntax(file_read: &str) -> String {
             && file_read.chars().nth(i + 2).unwrap() == 't'
             && found_shit == false
         {
+            println!(
+                "found a let thing checking if its a variable,{}",
+                &file_read
+            );
+
             is_a_variable = true;
-            println!("found a varible");
         }
         if file_read.chars().nth(i).unwrap() == '\n' {
             found_shit = false;
@@ -79,7 +83,13 @@ fn check_syntax(file_read: &str) -> String {
             println!("{} :{}", result, math_operations_version_0(&result));
             new_vec.clear();
         }
-        if file_read.chars().nth(i).unwrap() == ';' && found_shit == false && is_a_variable {
+        let result: String = new_vec.iter().collect();
+        // println!("Result before the shit if statment {}",result);
+        if file_read.chars().nth(i).unwrap() == ';'
+            && found_shit == false
+            && is_a_variable
+            && re_variable_name.is_match(&result)
+        {
             // println!("found");
             let result: String = new_vec.iter().collect();
             println!("{result}");
@@ -88,29 +98,46 @@ fn check_syntax(file_read: &str) -> String {
                 "IS A VARIABLE AND NOT COMMENTED OUT AND ENDS WITH ; {}",
                 result
             );
+            let re_integer: Regex = Regex::new(r"^let [a-zA-Z_][a-zA-Z0-9_]* = -?\d+;$").unwrap();
+            let re_float: Regex =
+                Regex::new(r"^let [a-zA-Z_][a-zA-Z0-9_]* = -?\d*\.\d*;$").unwrap();
+            let re_string: Regex =
+                Regex::new(r#"^let [a-zA-Z_][a-zA-Z0-9_]* = "[^"]*";$"#).unwrap();
+
+            if re_integer.is_match(&result) {
+                println!("{result} is an Integer");
+            } else if re_float.is_match(&result) {
+                println!("{result} is a Float");
+            } else if re_string.is_match(&result) {
+                println!("{result} is a String");
+            }
+
             // println!("{} :{}", result, math_operations_version_0(&result));
             new_vec.clear();
         }
     }
-    println!("vec is {:#?}", new_vec);
     let result: String = new_vec.iter().collect();
+    println!("vec is {:#?}", new_vec);
     println!("result is {:#?}", result);
 
+    if re_variable_name.is_match(&result) {
+        println!("MATCH");
+    }
     result
 }
 
-fn variables(file_read: &str) {
-    let re_variable_name: Regex = Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap();
-    let collecting_data: Vec<&str> = Vec::new();
+// fn variables(file_read: &str) {
+//     let re_variable_name: Regex = Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap();
+//     let collecting_data: Vec<&str> = Vec::new();
 
-    if re_variable_name.is_match(&file_read.replace(" ", "")) {
-        let collecting_data_for_varible: Vec<&str> = Vec::new();
-    }
+//     if re_variable_name.is_match(&file_read.replace(" ", "")) {
+//         let collecting_data_for_varible: Vec<&str> = Vec::new();
+//     }
 
-    // what will we feed to it? like let a = 4;
-    // this will need to find the let and after we found a let we know its a varible;
-    // we turn it into a=4; = a[int,4];
-}
+//     // what will we feed to it? like let a = 4;
+//     // this will need to find the let and after we found a let we know its a varible;
+//     // we turn it into a=4; = a[int,4];
+// }
 
 fn math_operations_version_0(file_read: &str) -> fsize {
     // need to check for line by line
